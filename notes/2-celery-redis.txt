@@ -1,0 +1,61 @@
+1. Foundation:
+Django → creates tasks (.delay())
+Redis → holds the task queue (broker)
+Celery worker → executes tasks
+SMTP → external service used by the task
+
+2. Install Python dependencies (inside venv)
+Activate your virtual environment: .\venv\Scripts\activate
+Install Celery and Redis client: pip install celery redis
+
+3. Run Redis using Docker (Windows-safe)
+Start Redis as a Docker container: docker run -d --name redis -p 6379:6379 redis:7
+Verify it’s running: docker ps
+Redis is now listening on localhost:6379
+
+4. Configure Celery in the Django PROJECT
+Create <project>/celery.py
+import os
+from celery import Celery
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "<project>.settings")
+app = Celery("<project>")
+app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()
+
+Expose Celery in <project>/__init__.py
+from .celery import app as celery_app
+__all__ = ("celery_app",)
+
+This is what make the worker work
+
+5. Add Celery settings (broker)
+In <project>/settings.py:
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+
+6. Write a background task in your APP
+E.g., an OTP to an email to verify the email address:
+<app/project>/tasks.py:
+from celery import shared_task
+@shared_task(bind=True)
+def send_signup_verification_email(self, to_mail, otp):
+    print(f"Sending OTP {otp} to {to_mail}")
+Celery auto-discovers tasks from apps in INSTALLED_APPS
+
+7. Use .delay() from Django views
+send_signup_verification_email.delay(to_mail, otp)
+
+8. Run The Celery worker and beat in seperate terminals:
+celery -A auth worker -l info --pool=solo
+celery -A auth beat -l info
+
+8. Run Django Server
+python manage.py runserver
+
+Workflow:
+Redis is the message broker: it stores/enqueues task messages that producers (your Django app calling .delay()) publish and consumers (Celery workers) read and acknowledge.
+Celery beat is only a scheduler: it sends periodic task messages into the broker (Redis); it does not execute tasks itself.
+The worker executes tasks by pulling messages from Redis, running the task code, and (optionally) writing results to a result backend (which can also be Redis).
+So the flow is: Django (.delay()) -> Redis (broker) -> Celery worker (executes) -> optional result backend.
+Important: both your Django process (producer), Celery worker, and Celery beat must be configured to use the same CELERY_BROKER_URL and be able to reach the Redis host/port.

@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: auth_db
+    environment:
+      POSTGRES_USER: master
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  redis:
+    image: redis:latest
+    container_name: auth_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,24 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "8000 Django: Runserver",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${workspaceFolder}/manage.py",
+			"args": [
+				"runserver",
+				"0.0.0.0:8000"
+				// "--noreload"
+			],
+			"django": true,
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+			"env": {
+				"PYTHONPATH": "${workspaceFolder}"
+			},
+			"envFile": "${workspaceFolder}/.env",
+			"justMyCode": false
+		}
+	]
+}

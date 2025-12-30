@@ -1,0 +1,33 @@
+1. Pull the official PostgreSQL image
+docker pull postgres:<version>(16 is current)
+
+2. Create and run a PostgreSQL container
+docker run -d --name postgres-db -e POSTGRES_USER=<username> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=<db_name> -p <port>:<port> postgres:<version>
+docker ps (to verify if the PostgreSQL container is running. )
+
+3. In the database client, add/map the following details:
+host->localhost,username=<username> database=<db_name> port=<port> password=<password>
+
+4. In settings.py, update the following config:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': '<db_name>',
+        'USER': '<username>',
+        'PASSWORD': '<password>',
+        'HOST': 'localhost',
+        'PORT': '<port>'
+    }
+}
+
+5. Pull the official Redis image
+docker pull redis:<version> (7 for now)
+
+6. Run a Redis container
+docker run -d --name <name> -p <port>:<port> redis:<version>
+docker ps (to verify if the Redis container is running. )
+
+7. Quick sanity check using redis-cli (inside container)
+exec -it <name> redis-cli
+ping (PONG should be the reply)
+
